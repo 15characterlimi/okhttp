@@ -20,6 +20,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Authenticator;
 import java.net.ConnectException;
+import java.net.CookieManager;
 import java.net.HttpRetryException;
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
@@ -594,6 +595,12 @@ public final class URLConnectionTest {
   }
 
   @Test public void connectViaHttpsReusingConnections() throws IOException, InterruptedException {
+    connectViaHttpsReusingConnections(false);
+    connectViaHttpsReusingConnections(true);
+  }
+
+  private void connectViaHttpsReusingConnections(boolean rebuildClient)
+          throws IOException, InterruptedException {
     server.useHttps(sslClient.socketFactory, false);
     server.enqueue(new MockResponse().setBody("this response comes via HTTPS"));
     server.enqueue(new MockResponse().setBody("another response via HTTPS"));
@@ -602,12 +609,25 @@ public final class URLConnectionTest {
     SSLSocketFactory clientSocketFactory = sslClient.socketFactory;
     RecordingHostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
 
-    urlFactory.setClient(urlFactory.client().newBuilder()
-        .sslSocketFactory(clientSocketFactory, sslClient.trustManager)
-        .hostnameVerifier(hostnameVerifier)
-        .build());
+    CookieJar cookieJar = new JavaNetCookieJar(new CookieManager());
+
+    urlFactory.setClient(new OkHttpClient.Builder()
+            .cache(cache)
+            .cookieJar(cookieJar)
+            .sslSocketFactory(clientSocketFactory, sslClient.trustManager)
+            .hostnameVerifier(hostnameVerifier)
+            .build());
     connection = urlFactory.open(server.url("/").url());
     assertContent("this response comes via HTTPS", connection);
+
+    if (rebuildClient) {
+      urlFactory.setClient(new OkHttpClient.Builder()
+              .cache(cache)
+              .cookieJar(cookieJar)
+              .sslSocketFactory(clientSocketFactory, sslClient.trustManager)
+              .hostnameVerifier(hostnameVerifier)
+              .build());
+    }
 
     connection = urlFactory.open(server.url("/").url());
     assertContent("another response via HTTPS", connection);

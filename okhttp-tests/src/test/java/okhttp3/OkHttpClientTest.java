@@ -23,7 +23,15 @@ import java.net.ResponseCache;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Test;
+
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+
+import okhttp3.mockwebserver.MockResponse;
+import okhttp3.mockwebserver.MockWebServer;
 
 import static okhttp3.TestUtil.defaultClient;
 import static org.junit.Assert.assertEquals;
@@ -120,4 +128,12 @@ public final class OkHttpClientTest {
     } catch (IllegalArgumentException expected) {
     }
   }
+
+  @Test
+  public void certificatePinnerEquality() {
+    OkHttpClient clientA = TestUtil.defaultClient();
+    OkHttpClient clientB = TestUtil.defaultClient();
+    assertEquals(clientA.certificatePinner(), clientB.certificatePinner());
+  }
+
 }
