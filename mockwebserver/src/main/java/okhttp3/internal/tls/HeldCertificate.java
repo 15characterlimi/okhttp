@@ -160,12 +160,12 @@ public final class HeldCertificate {
       }
 
       X509Certificate certificate = generator.generateX509Certificate(
-          signedByKeyPair.getPrivate(), "BC");
+          signedByKeyPair.getPrivate());
       return new HeldCertificate(certificate, heldKeyPair);
     }
 
     public KeyPair generateKeyPair() throws GeneralSecurityException {
-      KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA", "BC");
+      KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
       keyPairGenerator.initialize(1024, new SecureRandom());
       return keyPairGenerator.generateKeyPair();
     }
